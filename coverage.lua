@@ -31,6 +31,7 @@ local _Coverage = {
     remote.call("coverage","report")
   end,
   LevelPath = function(modname,basepath)
+    assert(script.mod_name == "level")
     levelpath = {
       modname = modname,
       basepath = basepath,
