@@ -93,6 +93,13 @@ remote.add_interface("coverage",{
   report = report,
 })
 
+script.on_init(function()
+  if runningtestname == "startup" then stop() end
+end)
+
+script.on_load(function()
+  if runningtestname == "startup" then stop() end
+end)
 
 commands.add_command("startCoverage", "Starts coverage counting",
 function(command)
