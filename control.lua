@@ -60,13 +60,22 @@ local function report()
           end
         end
         -- scenario scripts may provide hints to where they came from...
-        if modname == "level" and moddumps.level and moddumps.level.levelpath then
-          levelpath = moddumps.level.levelpath
-          modname = levelpath.modname
-          filename = levelpath.basepath .. filename
+        if modname == "level" then 
+          local level = moddumps.level
+          local levelpath = level and level.levelpath
+          if levelpath then
+            modname = levelpath.modname
+            filename = levelpath.basepath .. filename
+          end
         end
-        local modver = game.active_mods[modname]
-        outlines[#outlines+1] = string.format("SF:./%s_%s/%s\n",modname,modver,filename)
+        if modname == "level" then
+          -- we *still* can't identify level properly, so just give up...
+          outlines[#outlines+1] = string.format("SF:__level__/%s\n",filename)
+        else
+          -- we found it! This will be a correct path relative to the `mods` directory for anything but base/core.
+          local modver = game.active_mods[modname]
+          outlines[#outlines+1] = string.format("SF:./%s_%s/%s\n",modname,modver,filename)
+        end
         for line,count in pairs(lines) do
           outlines[#outlines+1] = string.format("DA:%d,%d\n",line,count)
         end
