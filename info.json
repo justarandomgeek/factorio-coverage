@@ -1,0 +1,12 @@
+{
+    "name": "coverage",
+    "version": "0.17.0",
+    "factorio_version": "0.17",
+    "title": "Lua Coverage Tester",
+    "author": "justarandomgeek",
+    "homepage": "",
+    "contact": "",
+    "description": "Coverage measurements for testing mods.",
+    "dependencies": ["base"]
+  }
+  
