@@ -6,7 +6,7 @@
     "author": "justarandomgeek",
     "homepage": "",
     "contact": "",
-    "description": "Coverage measurements for testing mods.",
+    "description": "Coverage measurements for testing mods. This is a developer tool, not meant for actual gameplay. It is intentionally desync unsafe. Do not use it in multiplayer.",
     "dependencies": ["base"]
   }
   
