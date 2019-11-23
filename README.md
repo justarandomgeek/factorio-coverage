@@ -8,7 +8,7 @@ Usage:
 
 `Coverage.Start("testname")` or `remote.call("coverage","start","testname")` (Script)
 
-Start line counting for all participating mods. Each mod will collect data independatly, to be gathered after tests complete.
+Start line counting for all participating mods. Each mod will collect data independently, to be gathered after tests complete.
 
 
 `/stopCoverage` (Command)
