@@ -51,10 +51,14 @@ local function start(testname)
   local getinfo = debug.getinfo
   local sub = string.sub
   debug.sethook(function(event,line)
-    local s = getinfo(2,"S").short_src
+    local s = getinfo(2,"S").source
     -- startup logging gets all the serpent loads of `global`
     -- serpent itself will also always show up as one of these
-    if sub(s,1,7) == "[string" then return end 
+    if sub(s,1,1) ~= "@" then
+      return 
+    else
+      s = sub(s,2)
+    end 
     local fileinfo = test[s]
     if not fileinfo then
       fileinfo = {}
