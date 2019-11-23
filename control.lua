@@ -42,6 +42,7 @@ local function stop()
   runningtestname = nil
   callAll("stop")
 end
+local nopathmods = {level=true,base=true,core=true}
 local function report()
   if runningtestname then stop() end
   local moddumps = callAll("dump")
@@ -68,11 +69,15 @@ local function report()
             filename = levelpath.basepath .. filename
           end
         end
-        if modname == "level" then
+        if nopathmods[modname] then
           -- we *still* can't identify level properly, so just give up...
-          outlines[#outlines+1] = string.format("SF:__level__/%s\n",filename)
+          -- also, we can't create proper paths for core/base anyway
+          outlines[#outlines+1] = string.format("SF:__%s__/%s\n",modname,filename)
+        elseif modname == nil then
+          --something totally unrecognized?
+          outlines[#outlines+1] = string.format("SF:%s\n",file)
         else
-          -- we found it! This will be a correct path relative to the `mods` directory for anything but base/core.
+          -- we found it! This will be a path relative to the `mods` directory.
           local modver = game.active_mods[modname]
           outlines[#outlines+1] = string.format("SF:./%s_%s/%s\n",modname,modver,filename)
         end
