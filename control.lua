@@ -56,8 +56,6 @@ local function getExcludeMods(excludetype)
     for _,modname in pairs(json) do
       nopathmods[modname] = true
     end
-  else 
-    nopathmods = game.active_mods
   end
   return nopathmods
 end
