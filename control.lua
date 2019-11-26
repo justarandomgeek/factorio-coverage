@@ -19,9 +19,9 @@ coveragedata = {
 
 --]]
 
-local function callAll(funcname,...)
+local function callAll(mods,funcname,...)
   local results = {}
-  for name,version in pairs(game.active_mods) do
+  for name,version in pairs(mods) do
     local remotename = "__coverage_" .. name
     if remote.interfaces[remotename] then
       results[name] = remote.call(remotename,funcname,...)
@@ -33,23 +33,56 @@ local function callAll(funcname,...)
   return results
 end
 
+local active_mods = nil
+local function getActiveMods()
+  if active_mods then return active_mods end
+  local json = game.json_to_table(settings.global["coverage-include-modstates"].value)
+  if json then
+    active_mods = {}
+    for _,modname in pairs(json) do
+      active_mods[modname] = game.active_mods[modname]
+    end
+  else 
+    active_mods = game.active_mods
+  end
+  return active_mods
+end
+
+
+local function getExcludeMods(excludetype)
+  local json = game.json_to_table(settings.global[excludetype].value)
+  local nopathmods = {}
+  if json then
+    for _,modname in pairs(json) do
+      nopathmods[modname] = true
+    end
+  else 
+    nopathmods = game.active_mods
+  end
+  return nopathmods
+end
+
 local runningtestname = nil
 local function start(testname)
   runningtestname = testname
-  callAll("start",testname)
+  callAll(getActiveMods(),"start",testname)
 end
 local function stop()
   runningtestname = nil
-  callAll("stop")
+  callAll(getActiveMods(),"stop")
 end
--- These mod names will remain in __modname__ format, rather than being translated
-local nopathmods = {level=true,base=true,core=true}
--- These mods will be omitted from output entirely
-local ignoremods = {coverage = true}
+
 local function report()
   if runningtestname then stop() end
-  local moddumps = callAll("dump")
-
+  -- These mod names will remain in __modname__ format, rather than being translated
+  local nopathmods = getExcludeMods("coverage-nopath-mods")
+  nopathmods.level = true
+  nopathmods.base = true
+  nopathmods.core = true
+  -- These mods will be omitted from output entirely
+  local ignoremods = getExcludeMods("coverage-exclude-modfiles")
+  --dump everything anyone collected, will just be empty for disabled mods unless startup collection
+  local moddumps = callAll(game.active_mods,"dump")
   local outlines = {}
   for dumpname,dump in pairs(moddumps) do
     for testname,files in pairs(dump.tests) do
@@ -104,11 +137,17 @@ remote.add_interface("coverage",{
 })
 
 script.on_init(function()
-  if runningtestname == "startup" then stop() end
+  if runningtestname == "startup" then
+    runningtestname = nil
+    callAll(game.active_mods,"stop")
+  end
 end)
 
 script.on_load(function()
-  if runningtestname == "startup" then stop() end
+  if runningtestname == "startup" then
+    runningtestname = nil
+    callAll(game.active_mods,"stop")
+  end
 end)
 
 commands.add_command("startCoverage", "Starts coverage counting",
