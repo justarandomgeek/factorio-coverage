@@ -12,6 +12,13 @@ coveragedata = {
         lines = {
           [linenumber] = count
         },
+        funcs = {
+          [linedefined] = {
+            names = {name=true,...},
+            linedefined = linedefined,
+            count = count,
+          },
+        },
       }
     }
   }
@@ -84,7 +91,7 @@ local function report()
   local outlines = {}
   for dumpname,dump in pairs(moddumps) do
     for testname,files in pairs(dump.tests) do
-      for file,lines in pairs(files) do
+      for file,fileinfo in pairs(files) do
         local modname,filename = file:match("__(.+)__/(.+)")
         if not ignoremods[modname] then
           outlines[#outlines+1] = string.format("TN:%s [%s]\n",testname,dumpname)
@@ -116,8 +123,30 @@ local function report()
             local modver = game.active_mods[modname]
             outlines[#outlines+1] = string.format("SF:./%s_%s/%s\n",modname,modver,filename)
           end
-          for line,count in pairs(lines) do
-            outlines[#outlines+1] = string.format("DA:%d,%d\n",line,count)
+          if fileinfo.funcs then
+            for _,func in pairs(fileinfo.funcs) do
+              local name,_ = next(func.names)
+              local nextname
+              if not name then
+                name = "[unknown]"
+              else
+                nextname,_ = next(func.names,name)
+              end
+             
+              if not nextname then
+                local linedefined = func.linedefined
+                outlines[#outlines+1] = string.format("FN:%d,%s@%d\n",linedefined,name,linedefined)
+                outlines[#outlines+1] = string.format("FNDA:%d,%s@%d\n",func.count,name,linedefined)
+              else
+                log("too many names")
+                log(serpent.block(func))
+              end
+            end
+          end
+          for line,count in pairs(fileinfo.lines) do
+            if settings.global["coverage-include-nohit-lines"].value or count ~= 0 then
+              outlines[#outlines+1] = string.format("DA:%d,%d\n",line,count)
+            end
           end
           outlines[#outlines+1] = "end_of_record\n"
         end

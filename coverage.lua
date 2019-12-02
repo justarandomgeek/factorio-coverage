@@ -12,6 +12,13 @@ coveragedata = {
         lines = {
           [linenumber] = count
         },
+        funcs = {
+          [linedefined] = {
+            names = {name=true,...},
+            linedefined = linedefined,
+            count = count,
+          },
+        },
       }
     }
   }
@@ -51,21 +58,74 @@ local function start(testname)
   local getinfo = debug.getinfo
   local sub = string.sub
   debug.sethook(function(event,line)
-    local s = getinfo(2,"S").source
-    -- startup logging gets all the serpent loads of `global`
-    -- serpent itself will also always show up as one of these
-    if sub(s,1,1) ~= "@" then
-      return 
-    else
-      s = sub(s,2)
-    end 
-    local fileinfo = test[s]
-    if not fileinfo then
-      fileinfo = {}
-      test[s] = fileinfo
+    if event == "line" then
+      local s = getinfo(2,"S").source
+      -- startup logging gets all the serpent loads of `global`
+      -- serpent itself will also always show up as one of these
+      if sub(s,1,1) ~= "@" then
+        return 
+      else
+        s = sub(s,2)
+      end 
+      local fileinfo = test[s]
+      if not fileinfo then
+        fileinfo = {}
+        test[s] = fileinfo
+      end
+      local lines = fileinfo.lines
+      if not lines then
+        lines = {}
+        fileinfo.lines = lines
+      end
+      lines[line] = (lines[line] or 0) + 1
+    elseif event == "call" or event == "tail call" then
+      local info = getinfo(2,"nS")
+      local s = info.source
+      -- startup logging gets all the serpent loads of `global`
+      -- serpent itself will also always show up as one of these
+      if sub(s,1,1) ~= "@" then
+        return 
+      else
+        s = sub(s,2)
+      end 
+      local fileinfo = test[s]
+      if not fileinfo then
+        fileinfo = {}
+        test[s] = fileinfo
+      end
+      local funcs = fileinfo.funcs
+      if not funcs then
+        funcs = {}
+        fileinfo.funcs = funcs
+      end
+      
+      local func = funcs[info.linedefined]
+      if not func then
+        func = {
+          linedefined = info.linedefined,
+          names = {},
+          count = 1, -- we got here by calling it, so start at one hit...
+        }
+        funcs[info.linedefined] = func
+
+        -- it's a new function, so add all the lines with zero hitcount
+        for line,_ in pairs(getinfo(2,"L").activelines) do
+          local lines = fileinfo.lines
+          if not lines then
+            lines = {}
+            fileinfo.lines = lines
+          end
+          lines[line] = (lines[line] or 0)
+        end
+      else
+        func.count = func.count + 1
+      end
+      local name = info.name
+      if name and name ~= "?" then 
+        func.names[name] = (func.names[name] or 0) + 1
+      end
     end
-    fileinfo[line] = (fileinfo[line] or 0) + 1
-  end,"l")
+  end,"cl")
 end
 
 log("coverage registered for " .. script.mod_name)

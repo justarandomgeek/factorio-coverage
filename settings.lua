@@ -30,4 +30,11 @@ data:extend{
       allow_blank = true,
       order="coverage-40-nopath-mods",
     },
+    {
+      type = "bool-setting",
+      name = "coverage-include-nohit-lines",
+      setting_type = "runtime-global",
+      default_value = false,
+      order="coverage-50-include-hohit-lines",
+    },
   }
